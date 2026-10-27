@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>J'ai une question pour toi</title>
+<meta property="og:title" content="J'ai une question pour toi">
+<meta property="og:description" content="Ouvre, c'est rapide.">
+<style>
+:root{--bg:#fff7f2;--ink:#2b2024;--rose:#e8576f;--rose-d:#c63f58;--rose-l:#fdeaee;--muted:#8a7a7e;--card:#fff}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
+body.lock{overflow:hidden;height:100vh}
+.card{background:var(--card);border-radius:24px;box-shadow:0 10px 40px rgba(200,80,100,.15);padding:32px 24px;max-width:420px;width:100%;text-align:center}
+.icon{width:72px;height:72px;margin:0 auto 12px;color:var(--rose);display:block;animation:beat 1.4s infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.12)}30%{transform:scale(1)}45%{transform:scale(1.08)}}
+.pour{color:var(--muted);margin:0 0 6px;font-weight:600}
+h1{font-size:1.6rem;margin:0 0 12px;line-height:1.25}
+.sub{color:var(--muted);margin:0}
+.date{display:inline-flex;align-items:center;gap:8px;background:var(--rose-l);color:var(--rose-d);padding:8px 14px;border-radius:999px;font-weight:600;margin-bottom:8px}
+.date svg{width:18px;height:18px}
+.btns{display:flex;gap:20px;justify-content:center;align-items:center;min-height:110px}
+button{font:inherit;font-weight:600;border:0;border-radius:999px;padding:12px 28px;cursor:pointer}
+#oui{background:var(--rose);color:#fff;transition:transform .25s}
+#oui:hover{background:var(--rose-d)}
+#non{background:#eee;color:var(--ink);white-space:nowrap;touch-action:none}
+#non.fuite{position:fixed;z-index:10;transition:left .25s,top .25s}
+.hidden{display:none!important}
+form{display:grid;gap:14px;text-align:left;margin-top:16px}
+label{display:grid;gap:6px;font-size:.9rem;font-weight:600}
+input{font:inherit;padding:10px 12px;border:1px solid #e3d6d9;border-radius:12px;width:100%}
+.aide{font-weight:400;color:var(--muted);font-size:.8rem}
+.primaire{background:var(--rose);color:#fff;width:100%}
+#resultat{margin-top:18px;display:grid;gap:10px}
+.ligne{display:flex;gap:8px}
+.ligne input{flex:1;font-size:.85rem}
+.secondaire{background:var(--rose-l);color:var(--rose-d);padding:10px 16px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-radius:999px;font-weight:600;justify-content:center}
+.secondaire svg{width:18px;height:18px}
+.goutte{position:fixed;top:-40px;color:var(--rose);opacity:.85;pointer-events:none;animation:tombe 3.2s linear forwards}
+@keyframes tombe{to{transform:translateY(115vh) rotate(45deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="coeur" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 2.9 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.5.8-1.3 2.3-2.5 4.4-2.5 3.7 0 5.7 4 4.2 7.3C19.5 16.4 12 21 12 21z"/></symbol>
+  <symbol id="cal" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></g></symbol>
+  <symbol id="copie" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></g></symbol>
+  <symbol id="oeil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></g></symbol>
+</svg>
+
+<main class="card hidden" id="ecran-q">
+  <svg class="icon"><use href="#coeur"/></svg>
+  <p class="pour hidden" id="pour"></p>
+  <h1 id="question"></h1>
+  <div id="quand" class="date hidden"><svg><use href="#cal"/></svg><span></span></div>
+  <div class="btns">
+    <button id="oui">Oui</button>
+    <button id="non">Non</button>
+  </div>
+</main>
+
+<main class="card hidden" id="ecran-oui">
+  <svg class="icon"><use href="#coeur"/></svg>
+  <h1>Trop bien !</h1>
+  <p class="sub" id="msg-oui"></p>
+</main>
+
+<main class="card hidden" id="ecran-creer">
+  <h1>Crée ton invitation</h1>
+  <p class="sub">Remplis, génère le lien, envoie-le par message.</p>
+  <form id="form">
+    <label>Son prénom <input name="pour" placeholder="Léa"></label>
+    <label>Ta question <input name="q" value="Ça te dit un date avec moi ?"></label>
+    <label>Quand <input name="quand" placeholder="Samedi 20h"></label>
+    <label>Ton prénom <input name="de" placeholder="Ton prénom"></label>
+    <label>Canal de notification
+      <input name="t">
+      <span class="aide">Abonne-toi à ce nom exact dans l'appli ntfy pour être prévenu de sa réponse.</span>
+    </label>
+    <button type="submit" class="primaire">Générer le lien</button>
+  </form>
+  <div id="resultat" class="hidden">
+    <div class="ligne">
+      <input id="lien" readonly>
+      <button id="copier" type="button" class="secondaire"><svg><use href="#copie"/></svg><span>Copier</span></button>
+    </div>
+    <a id="apercu" class="secondaire" target="_blank"><svg><use href="#oeil"/></svg>Prévisualiser</a>
+  </div>
+</main>
+
+<script>
+const P = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+
+/* ---------- Mode création ---------- */
+if (P.has('creer')) {
+  $('ecran-creer').classList.remove('hidden');
+  const form = $('form');
+  form.t.value = 'invite-' + Math.random().toString(36).slice(2, 10);
+  let urlFinale = '';
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const u = new URL(location.origin + location.pathname);
+    for (const [k, v] of new FormData(form)) if (v.trim()) u.searchParams.set(k, v.trim());
+    urlFinale = u.toString();
+    $('lien').value = urlFinale;
+    u.searchParams.set('apercu', '1');
+    $('apercu').href = u.toString();
+    $('resultat').classList.remove('hidden');
+  });
+  $('copier').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(urlFinale); }
+    catch { $('lien').select(); document.execCommand('copy'); }
+    $('copier').querySelector('span').textContent = 'Copié';
+    setTimeout(() => $('copier').querySelector('span').textContent = 'Copier', 1500);
+  });
+}
+
+/* ---------- Mode invitation ---------- */
+else {
+  document.body.classList.add('lock');
+  $('ecran-q').classList.remove('hidden');
+
+  const pour = P.get('pour') || '';
+  const de = P.get('de') || '';
+  const quand = P.get('quand') || '';
+  const topic = P.get('t') || '';
+  const apercu = P.has('apercu');
+
+  if (pour) { $('pour').textContent = 'Pour ' + pour; $('pour').classList.remove('hidden'); }
+  $('question').textContent = P.get('q') || 'Ça te dit un date avec moi ?';
+  if (quand) { $('quand').querySelector('span').textContent = quand; $('quand').classList.remove('hidden'); }
+
+  const oui = $('oui'), non = $('non');
+  const textes = ['Non', 'Tu es sûr(e) ?', 'Vraiment ?', 'Réfléchis encore', 'Allez...', 'Dernière chance', 'Le Oui est juste là'];
+  let essais = 0, echelle = 1;
+
+  function fuir() {
+    essais++;
+    echelle = Math.min(echelle + 0.15, 2.4);
+    oui.style.transform = `scale(${echelle})`;
+    non.textContent = textes[Math.min(essais, textes.length - 1)];
+
+    const r = non.getBoundingClientRect();
+    if (!non.classList.contains('fuite')) {
+      non.style.left = r.left + 'px';
+      non.style.top = r.top + 'px';
+      non.classList.add('fuite');
+      non.offsetWidth; // force le reflow pour que la transition s'applique
+    }
+    const m = 16, w = innerWidth - r.width - m, h = innerHeight - r.height - m;
+    const o = oui.getBoundingClientRect();
+    let x, y, n = 0;
+    do {
+      x = m + Math.random() * Math.max(w - m, 1);
+      y = m + Math.random() * Math.max(h - m, 1);
+      n++;
+    } while (n < 30 && x < o.right + 20 && x + r.width > o.left - 20 && y < o.bottom + 20 && y + r.height > o.top - 20);
+    non.style.left = x + 'px';
+    non.style.top = y + 'px';
+  }
+
+  non.addEventListener('pointerover', e => { if (e.pointerType === 'mouse') fuir(); });
+  non.addEventListener('pointerdown', e => { e.preventDefault(); fuir(); });
+  non.addEventListener('click', e => { e.preventDefault(); if (e.detail === 0) fuir(); });
+
+  function pluie() {
+    for (let i = 0; i < 35; i++) {
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      s.innerHTML = '<use href="#coeur"/>';
+      s.setAttribute('class', 'goutte');
+      const t = 12 + Math.random() * 22;
+      s.style.width = s.style.height = t + 'px';
+      s.style.left = Math.random() * 100 + 'vw';
+      s.style.animationDelay = Math.random() * 2 + 's';
+      document.body.appendChild(s);
+    }
+  }
+
+  oui.addEventListener('click', () => {
+    $('ecran-q').classList.add('hidden');
+    non.classList.add('hidden');
+    $('ecran-oui').classList.remove('hidden');
+    $('msg-oui').textContent = "C'est noté" + (quand ? ' pour ' + quand : '') + '.' + (de ? ' ' + de + ' a hâte.' : '');
+    pluie();
+    if (topic && !apercu) {
+      const msg = (pour || 'Ta date') + ' a dit OUI' + (quand ? ' (' + quand + ')' : '') +
+                  ' après ' + essais + ' tentative' + (essais > 1 ? 's' : '') + ' sur Non.';
+      fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: msg }).catch(() => {});
+    }
+  });
+}
+</script>
+</body>
+</html>
